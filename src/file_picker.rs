@@ -5,7 +5,7 @@ use std::{
 };
 
 #[cfg(feature = "gui")]
-/// Uses the system file picker to pick a file, with a `default` path
+/// Использует системный выбор файлов для выбора папки с указанным `default` путем
 fn show_folder_picker(default: impl AsRef<Path>, prompt: impl Into<String>) -> Option<PathBuf> {
     rfd::FileDialog::new()
         .set_can_create_directories(true)
@@ -15,7 +15,7 @@ fn show_folder_picker(default: impl AsRef<Path>, prompt: impl Into<String>) -> O
 }
 
 #[cfg(not(feature = "gui"))]
-/// Uses a terminal input to pick a file, with a `default` path
+/// Использует ввод в терминале для выбора папки с указанным `default` путем
 fn show_folder_picker(default: impl AsRef<Path>, prompt: impl Into<String>) -> Option<PathBuf> {
     inquire::Text::new(&prompt.into())
         .with_default(&default.as_ref().display().to_string())
@@ -24,9 +24,9 @@ fn show_folder_picker(default: impl AsRef<Path>, prompt: impl Into<String>) -> O
         .map(Into::into)
 }
 
-/// Picks a folder using the terminal or system file picker (depending on the feature flag `gui`)
+/// Выбирает папку с использованием терминала или системного выбора файлов (в зависимости от флага `gui`)
 ///
-/// The `default` path is shown/opened at first and the `name` is what folder the user is supposed to be picking (e.g. output directory)
+/// Путь по умолчанию `default` отображается/открывается первым, а `name` — это название папки, которую должен выбрать пользователь (например, директория вывода)
 pub fn pick_folder(
     default: impl AsRef<Path>,
     prompt: impl Into<String>,
