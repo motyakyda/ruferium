@@ -6,11 +6,11 @@ pub fn display_successes_failures(successes: &[String], failures: Vec<(String, E
     if !successes.is_empty() {
         println!(
             "{} {}",
-            "Successfully added".green(),
+            "Успешно добавлено".green(),
             successes.iter().map(|s| s.bold()).display(", ")
         );
 
-    // No need to print the ID again if there is only one
+    // Нет необходимости снова печатать ID, если есть только один
     } else if failures.len() == 1 {
         let err = &failures[0].1;
         return if matches!(err, libium::add::Error::AlreadyAdded) {
@@ -42,7 +42,7 @@ pub fn display_successes_failures(successes: &[String], failures: Vec<(String, E
     for (err, ids) in grouped_errors {
         println!(
             "{:pad_len$}: {}",
-            // Change already added into a warning
+            // Преобразуем "уже добавлено" в предупреждение
             if err == libium::add::Error::AlreadyAdded.to_string() {
                 err.yellow()
             } else {
