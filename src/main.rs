@@ -1,4 +1,4 @@
-#![deny(
+#![deny( 
     clippy::all,
     clippy::perf,
     clippy::cargo,
@@ -8,7 +8,7 @@
     clippy::complexity,
     clippy::create_dir,
     clippy::unwrap_used,
-    clippy::expect_used, // use anyhow::Context instead
+    clippy::expect_used, // используйте anyhow::Context вместо этого
     clippy::correctness,
     clippy::allow_attributes,
 )]
@@ -47,12 +47,12 @@ static TICK: LazyLock<ColoredString> = LazyLock::new(|| "✓".green());
 pub static PARALLEL_NETWORK: OnceLock<usize> = OnceLock::new();
 pub const DEFAULT_PARALLEL_NETWORK: usize = 10;
 
-/// Indicatif themes
+/// Темы Indicatif
 #[expect(clippy::expect_used)]
 pub static STYLE_NO: LazyLock<ProgressStyle> = LazyLock::new(|| {
     ProgressStyle::default_bar()
         .template("{spinner} {elapsed} [{wide_bar:.cyan/blue}] {pos:.cyan}/{len:.blue}")
-        .expect("Progress bar template parse failure")
+        .expect("Ошибка разбора шаблона индикатора прогресса")
         .progress_chars("#>-")
 });
 #[expect(clippy::expect_used)]
@@ -61,15 +61,15 @@ pub static STYLE_BYTE: LazyLock<ProgressStyle> = LazyLock::new(|| {
         .template(
             "{spinner} {bytes_per_sec} [{wide_bar:.cyan/blue}] {bytes:.cyan}/{total_bytes:.blue}",
         )
-        .expect("Progress bar template parse failure")
+        .expect("Ошибка разбора шаблона индикатора прогресса")
         .progress_chars("#>-")
 });
 
 fn main() -> ExitCode {
     #[cfg(windows)]
-    // Enable colours on conhost (command prompt or powershell)
+    // Включить цвета в conhost (командная строка или PowerShell)
     {
-        #[expect(clippy::unwrap_used, reason = "There is actually no error")]
+        #[expect(clippy::unwrap_used, reason = "Ошибок нет")]
         colored::control::set_virtual_terminal(true).unwrap();
     }
 
@@ -81,8 +81,8 @@ fn main() -> ExitCode {
     if let Some(threads) = cli.threads {
         builder.worker_threads(threads);
     }
-    #[expect(clippy::expect_used)] // No error handling yet
-    let runtime = builder.build().expect("Could not initialise Tokio runtime");
+    #[expect(clippy::expect_used)] // Обработки ошибок пока нет
+    let runtime = builder.build().expect("Не удалось инициализировать среду Tokio");
 
     if let Err(err) = runtime.block_on(actual_main(cli)) {
         if !err.to_string().is_empty() {
@@ -90,15 +90,15 @@ fn main() -> ExitCode {
             if err
                 .to_string()
                 .to_lowercase()
-                .contains("error trying to connect")
+                .contains("ошибка подключения")
                 || err
                     .to_string()
                     .to_lowercase()
-                    .contains("error sending request")
+                    .contains("ошибка отправки запроса")
             {
                 eprintln!(
                     "{}",
-                    "Verify that you are connnected to the internet"
+                    "Проверьте, подключены ли вы к интернету"
                         .yellow()
                         .bold()
                 );
@@ -111,8 +111,6 @@ fn main() -> ExitCode {
 }
 
 async fn actual_main(mut cli_app: Ferium) -> Result<()> {
-    // The complete command should not require a config.
-    // See [#139](https://github.com/gorilla-devs/ferium/issues/139) for why this might be a problem.
     if let SubCommands::Complete { shell } = cli_app.subcommand {
         clap_complete::generate(
             shell,
@@ -122,13 +120,11 @@ async fn actual_main(mut cli_app: Ferium) -> Result<()> {
         );
         return Ok(());
     }
-    // Alias `ferium profiles` to `ferium profile list`
     if let SubCommands::Profiles = cli_app.subcommand {
         cli_app.subcommand = SubCommands::Profile {
             subcommand: Some(ProfileSubCommands::List),
         };
     }
-    // Alias `ferium modpacks` to `ferium modpack list`
     if let SubCommands::Modpacks = cli_app.subcommand {
         cli_app.subcommand = SubCommands::Modpack {
             subcommand: Some(ModpackSubCommands::List),
@@ -155,7 +151,6 @@ async fn actual_main(mut cli_app: Ferium) -> Result<()> {
 
     let mut did_add_fail = false;
 
-    // Run function(s) based on the sub(sub)command to be executed
     match cli_app.subcommand {
         SubCommands::Complete { .. } | SubCommands::Profiles | SubCommands::Modpacks => {
             unreachable!();
@@ -167,22 +162,22 @@ async fn actual_main(mut cli_app: Ferium) -> Result<()> {
         } => {
             let profile = get_active_profile(&mut config)?;
 
-            let spinner = indicatif::ProgressBar::new_spinner().with_message("Reading files");
+            let spinner = indicatif::ProgressBar::new_spinner().with_message("Чтение файлов");
             spinner.enable_steady_tick(std::time::Duration::from_millis(100));
 
             let ids = libium::scan(directory.as_ref().unwrap_or(&profile.output_dir), || {
-                spinner.set_message("Querying servers");
+                spinner.set_message("Запрос к серверам");
             })
             .await?;
 
-            spinner.set_message("Adding mods");
+            spinner.set_message("Добавление модов");
 
             let mut send_ids = Vec::new();
             for id in ids {
                 use libium::config::structs::ModIdentifier;
                 match id {
                     (filename, None, None) => {
-                        println!("{} {}", "Unknown file:".yellow(), filename.dimmed());
+                        println!("{} {}", "Неизвестный файл:".yellow(), filename.dimmed());
                     }
                     (_, Some(mr_id), None) => send_ids.push(ModIdentifier::ModrinthProject(mr_id)),
                     (_, None, Some(cf_id)) => {
@@ -215,7 +210,7 @@ async fn actual_main(mut cli_app: Ferium) -> Result<()> {
             let filters: Vec<_> = filters.into();
 
             if identifiers.len() > 1 && !filters.is_empty() {
-                bail!("Only configure filters when adding a single mod!")
+                bail!("Фильтры можно настраивать только при добавлении одного мода!")
             }
 
             let (successes, failures) = libium::add(
@@ -240,9 +235,9 @@ async fn actual_main(mut cli_app: Ferium) -> Result<()> {
                 subcommands::list::verbose(profile, markdown).await?;
             } else {
                 println!(
-                    "{} {} on {} {}\n",
+                    "{} {} на {} {}\n",
                     profile.name.bold(),
-                    format!("({} mods)", profile.mods.len()).yellow(),
+                    format!("({} модов)", profile.mods.len()).yellow(),
                     profile
                         .filters
                         .mod_loader()
@@ -280,222 +275,71 @@ async fn actual_main(mut cli_app: Ferium) -> Result<()> {
         SubCommands::Modpack { subcommand } => {
             let mut default_flag = false;
             let subcommand = subcommand.unwrap_or_else(|| {
+
+
                 default_flag = true;
-                ModpackSubCommands::Info
+                ModpackSubCommands::List
             });
-            match subcommand {
-                ModpackSubCommands::Add {
-                    identifier,
-                    output_dir,
-                    install_overrides,
-                } => {
-                    if let Ok(project_id) = identifier.parse::<i32>() {
-                        subcommands::modpack::add::curseforge(
-                            &mut config,
-                            project_id,
-                            output_dir,
-                            install_overrides,
-                        )
-                        .await?;
-                    } else if let Err(err) = subcommands::modpack::add::modrinth(
-                        &mut config,
-                        &identifier,
-                        output_dir,
-                        install_overrides,
-                    )
-                    .await
-                    {
-                        return Err(
-                            if let Some(&ferinth::Error::InvalidIDorSlug) = err.downcast_ref() {
-                                anyhow!("Invalid identifier")
-                            } else {
-                                err
-                            },
-                        );
-                    }
-                }
-                ModpackSubCommands::Configure {
-                    output_dir,
-                    install_overrides,
-                } => {
-                    subcommands::modpack::configure(
-                        get_active_modpack(&mut config)?,
-                        output_dir,
-                        install_overrides,
-                    )?;
-                }
-                ModpackSubCommands::Delete {
-                    modpack_name,
-                    switch_to,
-                } => {
-                    subcommands::modpack::delete(&mut config, modpack_name, switch_to)?;
-                }
-                ModpackSubCommands::Info => {
-                    subcommands::modpack::info(get_active_modpack(&mut config)?, true);
-                }
-                ModpackSubCommands::List => {
-                    for (i, modpack) in config.modpacks.iter().enumerate() {
-                        subcommands::modpack::info(modpack, i == config.active_modpack);
-                    }
-                }
-                ModpackSubCommands::Switch { modpack_name } => {
-                    subcommands::modpack::switch(&mut config, modpack_name)?;
-                }
-                ModpackSubCommands::Upgrade => {
-                    subcommands::modpack::upgrade(get_active_modpack(&mut config)?).await?;
-                }
-            };
+
+            subcommands::modpacks::subcommand(subcommand, &mut config, &mut config_file).await?;
+
             if default_flag {
-                println!(
-                    "{} ferium modpack help {}",
-                    "Use".yellow(),
-                    "for more information about this subcommand".yellow()
-                );
+                println!("\n(Чтобы увидеть список профилей, используйте 'ferium modpack list')");
             }
         }
         SubCommands::Profile { subcommand } => {
             let mut default_flag = false;
             let subcommand = subcommand.unwrap_or_else(|| {
                 default_flag = true;
-                ProfileSubCommands::Info
+                ProfileSubCommands::List
             });
-            match subcommand {
-                ProfileSubCommands::Configure {
-                    game_versions,
-                    mod_loaders,
-                    name,
-                    output_dir,
-                } => {
-                    subcommands::profile::configure(
-                        get_active_profile(&mut config)?,
-                        game_versions,
-                        mod_loaders,
-                        name,
-                        output_dir,
-                    )
-                    .await?;
-                }
-                ProfileSubCommands::Create {
-                    import,
-                    game_version,
-                    mod_loader,
-                    name,
-                    output_dir,
-                } => {
-                    subcommands::profile::create(
-                        &mut config,
-                        import,
-                        if game_version.is_empty() {
-                            None
-                        } else {
-                            Some(game_version)
-                        },
-                        mod_loader,
-                        name,
-                        output_dir,
-                    )
-                    .await?;
-                }
-                ProfileSubCommands::Delete {
-                    profile_name,
-                    switch_to,
-                } => {
-                    subcommands::profile::delete(&mut config, profile_name, switch_to)?;
-                }
-                ProfileSubCommands::Info => {
-                    subcommands::profile::info(get_active_profile(&mut config)?, true);
-                }
 
-                ProfileSubCommands::List => {
-                    for (i, profile) in config.profiles.iter().enumerate() {
-                        subcommands::profile::info(profile, i == config.active_profile);
-                    }
-                }
+            subcommands::profile::subcommand(subcommand, &mut config, &mut config_file).await?;
 
-                ProfileSubCommands::Switch { profile_name } => {
-                    subcommands::profile::switch(&mut config, profile_name)?;
-                }
-            };
             if default_flag {
-                println!(
-                    "{} ferium profile help {}",
-                    "Use".yellow(),
-                    "for more information about this subcommand".yellow()
-                );
+                println!("\n(Чтобы увидеть список профилей, используйте 'ferium profile list')");
             }
         }
-        SubCommands::Remove { mod_names } => {
-            let profile = get_active_profile(&mut config)?;
-            check_empty_profile(profile)?;
-            subcommands::remove(profile, mod_names)?;
+        SubCommands::Download {
+            directory,
+            no_retries,
+            parallel,
+        } => {
+            download::download(
+                &get_active_profile(&mut config)?,
+                directory.as_deref(),
+                parallel,
+                !no_retries,
+            )
+            .await?;
         }
-        SubCommands::Upgrade => {
-            let profile = get_active_profile(&mut config)?;
-            check_empty_profile(profile)?;
-            subcommands::upgrade(profile).await?;
-        }
-    };
-
-    config.profiles.iter_mut().for_each(|profile| {
-        profile
-            .mods
-            .sort_unstable_by_key(|mod_| mod_.name.to_lowercase());
-    });
-    // Update config file with possibly edited config
-    config::write_file(&mut config_file, &config)?;
-
-    if did_add_fail {
-        Err(anyhow!(""))
-    } else {
-        Ok(())
     }
+
+    config::serialise(&config, &mut config_file)?;
+
+    ensure!(
+        !did_add_fail,
+        "{}",
+        "Некоторые моды не удалось добавить!".red()
+    );
+
+    Ok(())
 }
 
-/// Get the active profile with error handling
-fn get_active_profile(config: &mut Config) -> Result<&mut Profile> {
-    match config.profiles.len() {
-        0 => {
-            bail!("There are no profiles configured, add a profile using `ferium profile create`")
-        }
-        1 => config.active_profile = 0,
-        n if n <= config.active_profile => {
-            println!(
-                "{}",
-                "Active profile specified incorrectly, please pick a profile to use"
-                    .red()
-                    .bold()
-            );
-            subcommands::profile::switch(config, None)?;
-        }
-        _ => (),
-    }
-    Ok(&mut config.profiles[config.active_profile])
+#[expect(clippy::unwrap_used)]
+fn get_active_profile<'a>(config: &'a mut Config) -> Result<&'a mut Profile> {
+    Ok(config
+        .profiles
+        .iter_mut()
+        .find(|p| p.active)
+        .ok_or_else(|| anyhow!("Нет активного профиля!\n(Вы можете создать профиль с помощью 'ferium profile create')"))?)
 }
 
-/// Get the active modpack with error handling
-fn get_active_modpack(config: &mut Config) -> Result<&mut Modpack> {
-    match config.modpacks.len() {
-        0 => bail!("There are no modpacks configured, add a modpack using `ferium modpack add`"),
-        1 => config.active_modpack = 0,
-        n if n <= config.active_modpack => {
-            println!(
-                "{}",
-                "Active modpack specified incorrectly, please pick a modpack to use"
-                    .red()
-                    .bold()
-            );
-            subcommands::modpack::switch(config, None)?;
-        }
-        _ => (),
-    }
-    Ok(&mut config.modpacks[config.active_modpack])
-}
-
-/// Check if `profile` is empty, and if so return an error
 fn check_empty_profile(profile: &Profile) -> Result<()> {
     ensure!(
         !profile.mods.is_empty(),
-        "Your currently selected profile is empty! Run `ferium help` to see how to add mods"
+        "{}",
+        "Профиль не содержит модов.".yellow()
     );
     Ok(())
 }
