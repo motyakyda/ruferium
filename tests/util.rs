@@ -26,7 +26,7 @@ pub fn run_command(args: Vec<&str>, config_file: Option<&str>) -> Result<()> {
         Err(std::io::Error::new(
             std::io::ErrorKind::Other,
             format!(
-                "Command returned with exit code {:?}, stdout:{}, stderr:{}",
+                "Команда вернула код выхода {:?}, stdout:{}, stderr:{}",
                 output.status.code(),
                 std::str::from_utf8(&output.stdout).unwrap(),
                 std::str::from_utf8(&output.stderr).unwrap(),
