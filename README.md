@@ -2,6 +2,8 @@
 
 RuFerium is fork for ferium to translate ferium to russian lang!
 
+# ТЫ РУССКИЙ? ПЕРЕХОДИ В RELEASES И СКАЧИВАЙ ПЕРЕВОД!
+
 [![rust badge](https://img.shields.io/static/v1?label=Made%20with&message=Rust&logo=rust&labelColor=e82833&color=b11522)](https://www.rust-lang.org)
 [![licence badge](https://img.shields.io/github/license/gorilla-devs/ferium)](https://github.com/gorilla-devs/ferium/blob/main/LICENSE.txt)
 [![build.yml](https://github.com/gorilla-devs/ferium/actions/workflows/build.yml/badge.svg)](https://github.com/gorilla-devs/ferium/actions/workflows/build.yml)
